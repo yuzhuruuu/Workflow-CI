@@ -1,0 +1,50 @@
+name: MLflow CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12.7'
+
+    - name: Install dependencies
+      run: |
+        pip install mlflow==2.19.0 pandas scikit-learn numpy
+
+    - name: Run MLProject
+      run: |
+        mlflow run . -w main --no-conda
+
+    # Menyimpan Artefak ke GitHub Artifacts (Syarat Skilled/Advance)
+    - name: Upload MLflow Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: mlruns-artifacts
+        path: mlruns/
+
+    # Login ke Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Build dan Push Docker Image (Syarat Advance)
+    - name: Build and Push Docker Image
+      run: |
+        # Mengambil Run ID terbaru yang digenerate oleh mlflow run
+        RUN_ID=$(ls mlruns/0/ | grep -v meta.yaml | head -n 1)
+        # Membangun docker image dari model yang tersimpan
+        mlflow models build-docker -m "mlruns/0/$RUN_ID/artifacts/model" -n ${{ secrets.DOCKER_USERNAME }}/heart-disease-model:latest
+        # Push ke Docker Hub
+        docker push ${{ secrets.DOCKER_USERNAME }}/heart-disease-model:latest
