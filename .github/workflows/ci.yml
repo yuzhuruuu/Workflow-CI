@@ -18,13 +18,13 @@ jobs:
         python-version: '3.12.7'
 
     - name: Install dependencies
-          run: |
-            python -m pip install --upgrade pip
-            pip install mlflow==2.19.0 pandas scikit-learn numpy
+      run: |
+        python -m pip install --upgrade pip
+        pip install mlflow==2.19.0 pandas scikit-learn numpy
 
     - name: Run MLProject
-          run: |
-            mlflow run . --env-manager=local
+      run: |
+        mlflow run . --env-manager=local
 
     # Menyimpan Artefak ke GitHub Artifacts (Syarat Skilled/Advance)
     - name: Upload MLflow Artifacts
