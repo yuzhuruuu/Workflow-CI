@@ -1,0 +1,38 @@
+name: ML Model CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: MLProject
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: heart_disease_ci
+          environment-file: MLProject/conda.yaml
+          auto-activate-base: false
+
+      - name: Install MLflow
+        shell: bash -l {0}
+        run: pip install mlflow==2.19.0
+
+      - name: Run MLflow Project (train model)
+        shell: bash -l {0}
+        run: mlflow run . --env-manager=local
+
+      - name: Upload MLflow run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-run-artifacts
+          path: MLProject/mlruns
